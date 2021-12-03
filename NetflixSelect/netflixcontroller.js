@@ -42,17 +42,17 @@ let params = getParams($argument)
 
   };
 
-groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURIComponent(netflixGroup) + "")).policy;
+  groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURIComponent(netflixGroup) + "")).policy;
 
 
   /* 判断节点列表是否为空 */
   var data
-  if($persistentStore.read("NFREGIONCODE") == null){
-	data={}
-	}else{
-	data=JSON.parse($persistentStore.read("NFREGIONCODE"))
-	}
-  
+  if ($persistentStore.read("NFREGIONCODE") == null) {
+    data = {}
+  } else {
+    data = JSON.parse($persistentStore.read("NFREGIONCODE"))
+  }
+
   let dataname;
   var fullUnlock = [];
   var onlyOriginal = [];
@@ -81,46 +81,46 @@ groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURICom
     }
   }
 
-   var selectList = []
-	if (selectFU.length > 0) {
-      selectList = selectFU
-    } else if (selectFU.length == 0 && selectOG.length > 0) {
-      selectList = selectOG
-    }
+  var selectList = []
+  if (selectFU.length > 0) {
+    selectList = selectFU
+  } else if (selectFU.length == 0 && selectOG.length > 0) {
+    selectList = selectOG
+  }
 
   // 为空时执行检测
   if (selectFU.length == 0) {
-	//去除历史数据
-	for (let i = 0; i < selectName.length; ++i) {
-	if(fullUnlock.includes(selectName[i])==true){
-		del(fullUnlock,selectName[i])
-		}else if(onlyOriginal.includes(selectName[i])==true){
-		del(onlyOriginal,selectName[i])
-		}
-	}
+    //去除历史数据
+    for (let i = 0; i < selectName.length; ++i) {
+      if (fullUnlock.includes(selectName[i]) == true) {
+        del(fullUnlock, selectName[i])
+      } else if (onlyOriginal.includes(selectName[i]) == true) {
+        del(onlyOriginal, selectName[i])
+      }
+    }
     //遍历检测当选策略
     console.log("当前检测：" + groupName)
-	let newStatus;
-	let reg;
+    let newStatus;
+    let reg;
     for (let i = 0; i < selectName.length; ++i) {
       //切换节点
       $surge.setSelectGroupPolicy(groupName, selectName[i]);
       //等待
-      await timeout(1000).catch(() => {})
+      await timeout(1000).catch(() => { })
       //执行测试
       let { status, regionCode, policyName } = await testPolicy(selectName[i]);
-		newStatus=status 
-		reg = regionCode
-      
+      newStatus = status
+      reg = regionCode
+
       /* 检测超时 再测一次 */
       if (newStatus < 0) {
         console.log(selectName[i] + ": 连接超时了，再测一次")
-        await timeout(1000).catch(() => {})
-		let { status, regionCode, policyName } = await testPolicy(selectName[i]);
-        newStatus=status 
-		  reg = regionCode
+        await timeout(1000).catch(() => { })
+        let { status, regionCode, policyName } = await testPolicy(selectName[i]);
+        newStatus = status
+        reg = regionCode
       }
-      console.log("检测结果："+selectName[i]+" | "+statusName(newStatus))
+      console.log("检测结果：" + selectName[i] + " | " + statusName(newStatus))
       //填充数据
       dataname = selectName[i]
       data[dataname] = reg
@@ -135,11 +135,11 @@ groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURICom
           selectOG.push(selectName[i])
         }
       }
-		//找到全解锁节点 退出检测
-		if(newStatus==2) {
-		console.log("找到可用节点 退出检测")
-		break;
-		}
+      //找到全解锁节点 退出检测
+      if (newStatus == 2) {
+        console.log("找到可用节点 退出检测")
+        break;
+      }
     }
 
     if (selectFU.length > 0) {
@@ -147,19 +147,19 @@ groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURICom
     } else if (selectFU.length == 0 && selectOG.length > 0) {
       selectList = selectOG
     }
-	// 更新持久化数据
-	$persistentStore.write(fullUnlock.toString(),"FULLUNLOCK");
-	$persistentStore.write(onlyOriginal.toString(),"ONLYORIGINAL")
-	$persistentStore.write(JSON.stringify(data),"NFREGIONCODE")
+    // 更新持久化数据
+    $persistentStore.write(fullUnlock.toString(), "FULLUNLOCK");
+    $persistentStore.write(onlyOriginal.toString(), "ONLYORIGINAL")
+    $persistentStore.write(JSON.stringify(data), "NFREGIONCODE")
 
   }
 
-	//设定节点
-	 if (selectList.length > 0) {
-		$surge.setSelectGroupPolicy(groupName, selectList[0]);
-	 }else{
-	 	$surge.setSelectGroupPolicy(groupName, selectName[0]);
-	 }
+  //设定节点
+  if (selectList.length > 0) {
+    $surge.setSelectGroupPolicy(groupName, selectList[0]);
+  } else {
+    $surge.setSelectGroupPolicy(groupName, selectName[0]);
+  }
 
   /* 刷新信息 */
   //获取根节点名
@@ -178,7 +178,7 @@ groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURICom
     title: `${title}`,
   }
 
-  if (fullUnlock.includes(rootName)){
+  if (fullUnlock.includes(rootName)) {
     panel['content'] = `完整支援Netflix  地区：${data[rootName]}`
     panel['icon'] = params.icon1
     panel['icon-color'] = params.color1
@@ -187,7 +187,7 @@ groupName = (await httpAPI("/v1/policy_groups/select?group_name=" + encodeURICom
     panel['icon'] = params.icon2
     panel['icon-color'] = params.color2
   } else {
-console.log("test")
+    console.log("test")
     panel['content'] = `没有可供支援的节点呢～`
     panel['icon'] = params.icon3
     panel['icon-color'] = params.color3
@@ -308,9 +308,9 @@ function del(arr, num) {
 }
 
 function statusName(status) {
-    return status==2 ? "全解锁"
-         : status==1 ? "仅自制"
-         : status==0 ? "不解锁"
-         : status==-1 ? "检测超时"
-			: "检测失败";
+  return status == 2 ? "全解锁"
+    : status == 1 ? "仅自制"
+      : status == 0 ? "不解锁"
+        : status == -1 ? "检测超时"
+          : "检测失败";
 }
